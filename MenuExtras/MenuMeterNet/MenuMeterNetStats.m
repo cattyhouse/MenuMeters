@@ -38,11 +38,11 @@
 		return nil;
 	}
 
-	// Establish or connection to the PPP data gatherer
+	// Establish or connection to the PPP data gatherer. Absence of PPP is not
+	// fatal, we just cannot report on PPP links.
 	pppGatherer = [MenuMeterNetPPP sharedPPP];
 	if (!pppGatherer) {
-		NSLog(@"MenuMeterNetStats unable to connect to PPP data gatherer. Abort.");
-		return nil;
+		NSLog(@"MenuMeterNetStats unable to connect to PPP data gatherer, continuing without PPP.");
 	}
 
 	// Prefetch the data first time

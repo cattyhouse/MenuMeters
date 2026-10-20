@@ -67,11 +67,12 @@ static void scChangeCallback(SCDynamicStoreRef store, CFArrayRef changedKeys, vo
 		return nil;
 	}
 
-	// Get the PPP data puller
+	// Get the PPP data puller. PPP support (pppconfd) is not available on all
+	// systems, and on newer macOS versions the socket is gone entirely. The
+	// network meter itself works without it, so this must not be fatal.
 	pppGatherer = [MenuMeterNetPPP sharedPPP];
 	if (!pppGatherer) {
-		NSLog(@"MenuMeterNetConfig unable to establish pppconfd session.");
-		return nil;
+		NSLog(@"MenuMeterNetConfig unable to establish pppconfd session, continuing without PPP.");
 	}
 
 	// Connect to SystemConfiguration
@@ -126,9 +127,14 @@ static void scChangeCallback(SCDynamicStoreRef store, CFArrayRef changedKeys, vo
 
 - (void)dealloc {
 
-	CFRunLoopRemoveSource(CFRunLoopGetCurrent(), scRunSource, kCFRunLoopDefaultMode);
-	CFRelease(scSession);
-	mach_port_deallocate(mach_task_self(), masterPort);
+	// Any of these may still be unset when init bailed out early; passing NULL
+	// to the CF run loop functions is a hard crash on current macOS.
+	if (scRunSource) {
+		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), scRunSource, kCFRunLoopDefaultMode);
+		CFRelease(scRunSource);
+	}
+	if (scSession) CFRelease(scSession);
+	if (masterPort) mach_port_deallocate(mach_task_self(), masterPort);
 
 } // dealloc
 

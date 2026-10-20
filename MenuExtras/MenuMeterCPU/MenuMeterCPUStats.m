@@ -23,6 +23,7 @@
 
 #import "MenuMeterCPUStats.h"
 #import <IOKit/pwr_mgt/IOPM.h>
+#import <IOKit/pwr_mgt/IOPMLib.h>
 #import "TemperatureReader.h"
 #import "MenuMeterDefaults.h"
 #include <TargetConditionals.h>

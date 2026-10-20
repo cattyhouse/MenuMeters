@@ -136,20 +136,30 @@ static id gSharedPPP = nil;
 		return nil;
 	}
 
-	// Establish or connection to the PPP socket
-	pppconfdSocket = socket(AF_LOCAL, SOCK_STREAM, 0);
+	// Establish or connection to the PPP socket. This is best effort only: the
+	// socket does not exist on systems without PPP (and newer macOS versions
+	// dropped pppconfd altogether), and everything else still works without it.
+	pppconfdSocket = -1;
+	int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+	if (fd < 0) {
+		NSLog(@"MenuMeterNetPPP unable to create socket for pppconfd, continuing without PPP.");
+		return self;
+	}
 	struct sockaddr_un socketaddr = { 0, AF_LOCAL, kPPPSocketPath };
-	if (connect(pppconfdSocket, (struct sockaddr *)&socketaddr, (socklen_t)sizeof(socketaddr))) {
-		NSLog(@"MenuMeterNetPPP unable to establish socket for pppconfd. Abort.");
-		return nil;
+	if (connect(fd, (struct sockaddr *)&socketaddr, (socklen_t)sizeof(socketaddr))) {
+		NSLog(@"MenuMeterNetPPP unable to establish socket for pppconfd, continuing without PPP.");
+		close(fd);
+		return self;
 	}
 
 	// Create the filehandle
-	pppconfdHandle = [[NSFileHandle alloc] initWithFileDescriptor:pppconfdSocket];
+	pppconfdHandle = [[NSFileHandle alloc] initWithFileDescriptor:fd];
 	if (!pppconfdHandle) {
-		NSLog(@"MenuMeterNetPPP unable to establish file handle for pppconfd. Abort.");
-		return nil;
+		NSLog(@"MenuMeterNetPPP unable to establish file handle for pppconfd, continuing without PPP.");
+		close(fd);
+		return self;
 	}
+	pppconfdSocket = fd;
 
 	// Send on back
 	return self;
@@ -158,7 +168,7 @@ static id gSharedPPP = nil;
 
 - (void)dealloc {
 
-	close(pppconfdSocket);
+	if (pppconfdSocket >= 0) close(pppconfdSocket);
 
 } // dealloc
 
@@ -331,6 +341,9 @@ static id gSharedPPP = nil;
 } // pppconfdLinkCount
 
 - (NSData *)pppconfdExecMessage:(NSData *)message {
+
+	// No PPP on this system
+	if (!pppconfdHandle) return nil;
 
 	// Write the data
 	[pppconfdHandle writeData:message];
