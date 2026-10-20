@@ -84,5 +84,6 @@ clang -arch arm64 -arch x86_64 \
   -framework PreferencePanes -framework Foundation \
   -F . -framework Sparkle 2>>"$OUT/clang.log" || { echo "LINK FAILED, see $OUT/clang.log"; exit 1; }
 
-echo "BUILD OK"
+VERSION=$(sed -n 's/^#define MM_VERSION[[:space:]]*\([0-9.]*\).*/\1/p' InfoPlistPreprocessor.h)
+echo "BUILD OK (version $VERSION)"
 file "$OUT/MenuMeters"

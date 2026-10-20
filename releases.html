@@ -17,6 +17,12 @@ dt{
 </head>
 <body>
 <dl>
+    <dt>2.1.6.2 (Oct/20/2026)</dt>
+    <dd>
+        MenuMeters no longer refuses to launch when the legacy pppconfd socket is missing,
+        which is the case on recent macOS versions. PPP information (dial-up and PPP links)
+        is now optional and everything else works as before.
+    </dd>
     <dt>2.1.6.1 (Nov/13/2021)</dt>
     <dd>
         Fixes a bug in the memory meter which I introduced while refactoring the old code base.
